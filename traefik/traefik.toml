@@ -19,7 +19,7 @@
     swarmMode = true
     swarmModeRefreshSeconds = "15s"
     httpClientTimeout = "0s"
-    defaultRule = "Host(`{{ trimPrefix `/` .Name }}.local.xarthisius.xyz`)"
+    defaultRule = 'Host(`{{ trimPrefix `/` .Name }}.{{ env "WT_DOMAIN" | default "local.xarthisius.xyz" }}`)'
   [providers.file]
     filename="/etc/traefik/vocab.toml"
     watch=true

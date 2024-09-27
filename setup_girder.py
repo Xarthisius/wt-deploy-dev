@@ -14,16 +14,16 @@ params = {
     "admin": True,
 }
 headers = {"Content-Type": "application/json", "Accept": "application/json"}
-
+domain = os.environ.get("WT_DOMAIN", "local.xarthisius.xyz")
 
 def final_msg():
     print("-------------- You should be all set!! -------------")
-    print("try going to https://girder.local.xarthisius.xyz and log in with: ")
+    print(f"try going to https://girder.{domain} and log in with: ")
     print("  user : %s" % params["login"])
     print("  pass : %s" % params["password"])
 
 
-api_url = "https://girder.local.xarthisius.xyz/api/v1"
+api_url = f"https://girder.{domain}/api/v1"
 
 # Give girder time to start
 while True:
@@ -96,7 +96,7 @@ print("Setting up Plugin")
 settings = [
     {
         "key": "core.cors.allow_origin",
-        "value": "https://dashboard.local.xarthisius.xyz,http://localhost:4200,https://legacy.local.xarthisius.xyz",
+        "value": f"https://dashboard.{domain}",
     },
     {
         "key": "core.cors.allow_headers",
@@ -107,7 +107,7 @@ settings = [
             "X-Forwarded-Host, Remote-Addr, Cache-Control"
         ),
     },
-    {"key": "core.cookie_domain", "value": ".local.xarthisius.xyz"},
+    {"key": "core.cookie_domain", "value": f".{domain}"},
     {"key": "core.secure_cookie", "value": True},
     {"key": "worker.api_url", "value": "http://girder:8080/api/v1"},
     {"key": "worker.broker", "value": "redis://redis/"},
@@ -151,7 +151,7 @@ except requests.exceptions.HTTPError:
     raise
 
 with open("dev_images.json", "r") as fp:
-    images = json.load(fp)
+    images = json.loads(fp.read().replace("local.wholetale.org", domain))
 
 for image in images:
     print(f"Creating {image['name']} image")

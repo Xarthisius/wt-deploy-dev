@@ -52,6 +52,15 @@ export ORCID_CLIENT_ID=<client ID>
 export ORCID_CLIENT_SECRET=<client secret>
 ```
 
+Export cloudflare API TOKEN:
+```
+export WT_CLOUDFLARE_TOKEN=<cf_api_token>
+```
+
+Export domain you are using:
+```
+export WT_DOMAIN=local.wholetale.org
+```
 
 Clone this repository:
 

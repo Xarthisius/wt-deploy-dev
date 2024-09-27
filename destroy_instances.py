@@ -12,7 +12,7 @@ headers = {
     'Accept': 'application/json'
 }
 
-api_url = 'https://girder.local.wholetale.org/api/v1'
+api_url = f'https://girder.{os.environ.get("WT_DOMAIN", "local.xarthisius.xyz")}/api/v1'
 
 try:
     r = requests.get(api_url + '/user/authentication', auth=HTTPBasicAuth('admin', 'arglebargle123'))

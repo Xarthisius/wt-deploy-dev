@@ -1,8 +1,8 @@
 #!/bin/sh
 
-domain=local.xarthisius.xyz
+domain=$WT_DOMAIN
 role=manager,celery
-image=wholetale/gwvolman:v1.2.1
+image=wholetale/gwvolman:v1.2.2
 registry_user=fido
 registry_pass=secretpass
 r2d_version=xarthisius/repo2docker_wholetale:20240926

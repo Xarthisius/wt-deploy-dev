@@ -51,22 +51,22 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp:/tmp
     environment:
-      - DOMAIN=local.xarthisius.xyz
-      - DASHBOARD_URL=https://dashboard.local.xarthisius.xyz
+      - DOMAIN=$WT_DOMAIN
+      - DASHBOARD_URL=https://dashboard.${WT_DOMAIN}
       - GOSU_USER=girder:girder:999
-      - "GOSU_CHOWN=/tmp/data /tmp/ps"
+      - "GOSU_CHOWN=/tmp/data"
       - DATAONE_URL=https://cn-stage-2.test.dataone.org/cn
       - HOSTDIR=/
     deploy:
       replicas: 1
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.girder.rule=Host(`girder.local.xarthisius.xyz`)"
+        - "traefik.http.routers.girder.rule=Host(`girder.${WT_DOMAIN}`)"
         - "traefik.http.routers.girder.entrypoints=websecure"
         - "traefik.http.routers.girder.tls=true"
         - "traefik.http.routers.girder.tls.certresolver=default"
-        - "traefik.http.routers.girder.tls.domains[0].main=local.xarthisius.xyz"
-        - "traefik.http.routers.girder.tls.domains[0].sans=*.local.xarthisius.xyz"
+        - "traefik.http.routers.girder.tls.domains[0].main=${WT_DOMAIN}"
+        - "traefik.http.routers.girder.tls.domains[0].sans=*.${WT_DOMAIN}"
         - "traefik.http.services.girder.loadbalancer.server.port=8080"
         - "traefik.http.services.girder.loadbalancer.passhostheader=true"
         - "traefik.docker.network=wt_traefik-net"
@@ -98,7 +98,7 @@ services:
     networks:
       - traefik-net
     environment:
-      - GIRDER_API_URL=https://girder.local.xarthisius.xyz/api/v1
+      - GIRDER_API_URL=https://girder.${WT_DOMAIN}/api/v1
       - AUTH_PROVIDER=Globus
       - DATAONE_URL=https://cn.dataone.org/cn/v2
       - RTD_URL=https://wholetale.readthedocs.io/en/latest
@@ -107,7 +107,7 @@ services:
       replicas: 1
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.dashboard.rule=Host(`dashboard.local.xarthisius.xyz`)"
+        - "traefik.http.routers.dashboard.rule=Host(`dashboard.${WT_DOMAIN}`)"
         - "traefik.http.routers.dashboard.entrypoints=websecure"
         - "traefik.http.routers.dashboard.tls=true"
         - "traefik.http.services.dashboard.loadbalancer.server.port=80"
@@ -150,7 +150,7 @@ services:
       replicas: 1
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.registry.rule=Host(`registry.local.xarthisius.xyz`)"
+        - "traefik.http.routers.registry.rule=Host(`registry.${WT_DOMAIN}`)"
         - "traefik.http.routers.registry.entrypoints=websecure"
         - "traefik.http.routers.registry.tls=true"
         - "traefik.http.services.registry.loadbalancer.server.port=5000"
@@ -167,7 +167,7 @@ services:
       replicas: 1
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.images.rule=Host(`images.local.xarthisius.xyz`)"
+        - "traefik.http.routers.images.rule=Host(`images.${WT_DOMAIN}`)"
         - "traefik.http.routers.images.rule=Method(`GET`)"
         - "traefik.http.routers.images.entrypoints=websecure"
         - "traefik.http.routers.images.tls=true"
@@ -201,13 +201,13 @@ services:
 #    labels:
 #      - "traefik.enable=false"
 #    environment:
-#      - GIRDER_API_URL=https://girder.local.xarthisius.xyz/api/v1
+#      - GIRDER_API_URL=https://girder.${WT_DOMAIN}/api/v1
 #      - HOSTDIR=/host
-#      - DOMAIN=local.xarthisius.xyz
+#      - DOMAIN=${WT_DOMAIN}
 #      - TRAEFIK_NETWORK=wt_traefik-net
 #      - TRAEFIK_ENTRYPOINT=https
 #      - REGISTRY_USER=fido
-#      - REGISTRY_URL=https://registry.local.xarthisius.xyz
+#      - REGISTRY_URL=https://registry.${WT_DOMAIN}
 #      - REGISTRY_PASS=secretpass
 #    volumes:
 #      - /var/run/docker.sock:/var/run/docker.sock:ro
