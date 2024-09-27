@@ -18,12 +18,12 @@ headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
 def final_msg():
     print("-------------- You should be all set!! -------------")
-    print("try going to https://girder.local.wholetale.org and log in with: ")
+    print("try going to https://girder.local.xarthisius.xyz and log in with: ")
     print("  user : %s" % params["login"])
     print("  pass : %s" % params["password"])
 
 
-api_url = "https://girder.local.wholetale.org/api/v1"
+api_url = "https://girder.local.xarthisius.xyz/api/v1"
 
 # Give girder time to start
 while True:
@@ -96,7 +96,7 @@ print("Setting up Plugin")
 settings = [
     {
         "key": "core.cors.allow_origin",
-        "value": "https://dashboard.local.wholetale.org,http://localhost:4200,https://legacy.local.wholetale.org",
+        "value": "https://dashboard.local.xarthisius.xyz,http://localhost:4200,https://legacy.local.xarthisius.xyz",
     },
     {
         "key": "core.cors.allow_headers",
@@ -107,7 +107,7 @@ settings = [
             "X-Forwarded-Host, Remote-Addr, Cache-Control"
         ),
     },
-    {"key": "core.cookie_domain", "value": ".local.wholetale.org"},
+    {"key": "core.cookie_domain", "value": ".local.xarthisius.xyz"},
     {"key": "core.secure_cookie", "value": True},
     {"key": "worker.api_url", "value": "http://girder:8080/api/v1"},
     {"key": "worker.broker", "value": "redis://redis/"},

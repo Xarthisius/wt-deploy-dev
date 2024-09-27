@@ -1,7 +1,7 @@
 [http]
   [http.routers]
     [http.routers.vocabularies]
-      rule="Host(`vocabularies.local.wholetale.org`)"
+      rule="Host(`vocabularies.local.xarthisius.xyz`)"
       service="vocabularies"
       entryPoints=["web", "websecure"]
       middlewares=["repo-prefix"]

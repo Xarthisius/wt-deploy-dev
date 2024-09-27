@@ -19,7 +19,7 @@
     swarmMode = true
     swarmModeRefreshSeconds = "15s"
     httpClientTimeout = "0s"
-    defaultRule = "Host(`{{ trimPrefix `/` .Name }}.local.wholetale.org`)"
+    defaultRule = "Host(`{{ trimPrefix `/` .Name }}.local.xarthisius.xyz`)"
   [providers.file]
     filename="/etc/traefik/vocab.toml"
     watch=true
@@ -64,9 +64,9 @@
 [certificatesResolvers]
   [certificatesResolvers.default]
     [certificatesResolvers.default.acme]
-      email = "bgates@microsoft.com"
+      email = "xarthisius.kk@gmail.com"
       storage = "/acme/acme.json"
       [certificatesResolvers.default.acme.dnsChallenge]
-        provider = "godaddy"
-        delayBeforeCheck = "30m0s"
+        provider = "cloudflare"
+        delayBeforeCheck = "2m0s"
         #entryPoint = "https"

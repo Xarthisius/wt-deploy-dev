@@ -6,7 +6,6 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"
     networks:
       - traefik-net
     volumes:
@@ -18,8 +17,7 @@ services:
       labels:
         - "traefik.enable=false"
     environment:
-      - GODADDY_API_KEY=$WT_GODADDY_API_KEY
-      - GODADDY_API_SECRET=$WT_GODADDY_API_SECRET
+      - CF_DNS_API_TOKEN=$WT_CLOUDFLARE_TOKEN
 
   mongo:
     image: mongo:3.2
@@ -34,7 +32,7 @@ services:
         - "traefik.enable=false"
 
   girder:
-    image: wholetale/girder:latest
+    image: wholetale/girder:v1.2
     networks:
       - traefik-net
       - celery
@@ -42,33 +40,33 @@ services:
     volumes:
       - ./volumes:/tmp/data
       - ./girder/girder.local.cfg:/girder/girder/conf/girder.local.cfg
-      - ./src/wholetale:/girder/plugins/wholetale
-      - ./src/wt_data_manager:/girder/plugins/wt_data_manager
-      - ./src/wt_home_dir:/girder/plugins/wt_home_dir
-      - ./src/wt_versioning:/girder/plugins/wt_versioning
-      - ./src/globus_handler:/girder/plugins/globus_handler
-      - ./src/virtual_resources:/girder/plugins/virtual_resources
-      - ./src/gwvolman:/gwvolman
-      - ./src/girderfs:/girderfs
+      # - ./src/wholetale:/girder/plugins/wholetale
+      # - ./src/wt_data_manager:/girder/plugins/wt_data_manager
+      # - ./src/wt_home_dir:/girder/plugins/wt_home_dir
+      # - ./src/wt_versioning:/girder/plugins/wt_versioning
+      # - ./src/globus_handler:/girder/plugins/globus_handler
+      # - ./src/virtual_resources:/girder/plugins/virtual_resources
+      # - ./src/gwvolman:/gwvolman
+      # - ./src/girderfs:/girderfs
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp:/tmp
     environment:
-      - DOMAIN=local.wholetale.org
-      - DASHBOARD_URL=https://dashboard.local.wholetale.org
+      - DOMAIN=local.xarthisius.xyz
+      - DASHBOARD_URL=https://dashboard.local.xarthisius.xyz
       - GOSU_USER=girder:girder:999
-      - "GOSU_CHOWN=/tmp/data"
+      - "GOSU_CHOWN=/tmp/data /tmp/ps"
       - DATAONE_URL=https://cn-stage-2.test.dataone.org/cn
       - HOSTDIR=/
     deploy:
       replicas: 1
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.girder.rule=Host(`girder.local.wholetale.org`)"
+        - "traefik.http.routers.girder.rule=Host(`girder.local.xarthisius.xyz`)"
         - "traefik.http.routers.girder.entrypoints=websecure"
         - "traefik.http.routers.girder.tls=true"
         - "traefik.http.routers.girder.tls.certresolver=default"
-        - "traefik.http.routers.girder.tls.domains[0].main=local.wholetale.org"
-        - "traefik.http.routers.girder.tls.domains[0].sans=*.local.wholetale.org"
+        - "traefik.http.routers.girder.tls.domains[0].main=local.xarthisius.xyz"
+        - "traefik.http.routers.girder.tls.domains[0].sans=*.local.xarthisius.xyz"
         - "traefik.http.services.girder.loadbalancer.server.port=8080"
         - "traefik.http.services.girder.loadbalancer.passhostheader=true"
         - "traefik.docker.network=wt_traefik-net"
@@ -96,11 +94,11 @@ services:
         - "traefik.enable=false"
 
   dashboard:
-    image: wholetale/ngx-dashboard:latest
+    image: wholetale/ngx-dashboard:v1.2
     networks:
       - traefik-net
     environment:
-      - GIRDER_API_URL=https://girder.local.wholetale.org/api/v1
+      - GIRDER_API_URL=https://girder.local.xarthisius.xyz/api/v1
       - AUTH_PROVIDER=Globus
       - DATAONE_URL=https://cn.dataone.org/cn/v2
       - RTD_URL=https://wholetale.readthedocs.io/en/latest
@@ -109,14 +107,14 @@ services:
       replicas: 1
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.dashboard.rule=Host(`dashboard.local.wholetale.org`)"
+        - "traefik.http.routers.dashboard.rule=Host(`dashboard.local.xarthisius.xyz`)"
         - "traefik.http.routers.dashboard.entrypoints=websecure"
         - "traefik.http.routers.dashboard.tls=true"
         - "traefik.http.services.dashboard.loadbalancer.server.port=80"
         - "traefik.http.services.dashboard.loadbalancer.passhostheader=true"
         - "traefik.docker.network=wt_traefik-net"
-    volumes:
-      - ./src/ngx-dashboard/dist/browser/:/usr/share/nginx/html/
+    #volumes:
+    #  - ./src/ngx-dashboard/dist/browser/:/usr/share/nginx/html/
   
   instance-errors:
     image: wholetale/custom-errors:latest
@@ -152,7 +150,7 @@ services:
       replicas: 1
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.registry.rule=Host(`registry.local.wholetale.org`)"
+        - "traefik.http.routers.registry.rule=Host(`registry.local.xarthisius.xyz`)"
         - "traefik.http.routers.registry.entrypoints=websecure"
         - "traefik.http.routers.registry.tls=true"
         - "traefik.http.services.registry.loadbalancer.server.port=5000"
@@ -169,12 +167,31 @@ services:
       replicas: 1
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.images.rule=Host(`images.local.wholetale.org`)"
+        - "traefik.http.routers.images.rule=Host(`images.local.xarthisius.xyz`)"
         - "traefik.http.routers.images.rule=Method(`GET`)"
         - "traefik.http.routers.images.entrypoints=websecure"
         - "traefik.http.routers.images.tls=true"
         - "traefik.http.services.images.loadbalancer.server.port=5000"
         - "traefik.http.services.images.loadbalancer.passhostheader=true"
+        - "traefik.docker.network=wt_traefik-net"
+
+  instance_errors:
+    image: wholetale/custom-errors:v1.1
+    networks:
+      - traefik-net
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.instance-errors.rule=HostRegexp(`{host:tmp-.*}`)"
+        - "traefik.http.routers.instance-errors.entrypoints=websecure"
+        - "traefik.http.routers.instance-errors.tls=true"
+        - "traefik.http.routers.instance-errors.priority=1"
+        - "traefik.http.routers.instance-errors.middlewares=error-pages-middleware"
+        - "traefik.http.middlewares.error-pages-middleware.errors.status=400-599"
+        - "traefik.http.middlewares.error-pages-middleware.errors.service=instance-errors"
+        - "traefik.http.middlewares.error-pages-middleware.errors.query=/{status}.html"
+        - "traefik.http.services.instance-errors.loadbalancer.server.port=80"
         - "traefik.docker.network=wt_traefik-net"
 
 #  celery_worker:
@@ -184,13 +201,13 @@ services:
 #    labels:
 #      - "traefik.enable=false"
 #    environment:
-#      - GIRDER_API_URL=https://girder.local.wholetale.org/api/v1
+#      - GIRDER_API_URL=https://girder.local.xarthisius.xyz/api/v1
 #      - HOSTDIR=/host
-#      - DOMAIN=local.wholetale.org
+#      - DOMAIN=local.xarthisius.xyz
 #      - TRAEFIK_NETWORK=wt_traefik-net
 #      - TRAEFIK_ENTRYPOINT=https
 #      - REGISTRY_USER=fido
-#      - REGISTRY_URL=https://registry.local.wholetale.org
+#      - REGISTRY_URL=https://registry.local.xarthisius.xyz
 #      - REGISTRY_PASS=secretpass
 #    volumes:
 #      - /var/run/docker.sock:/var/run/docker.sock:ro

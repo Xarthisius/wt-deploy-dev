@@ -56,7 +56,7 @@ $(SUBDIRS):
 
 services: dirs sources
 
-dev: services
+dev:
 	docker stack deploy --compose-file=docker-stack.yml wt
 	./run_worker.sh
 	cid=$$(docker ps --filter=name=wt_girder -q);
@@ -66,10 +66,10 @@ dev: services
 	    cid=$$(docker ps --filter=name=wt_girder -q) ; \
 	done; \
 	true
-	docker exec -ti $$(docker ps --filter=name=wt_girder -q) girder-install plugin plugins/wt_data_manager plugins/wholetale plugins/wt_home_dir plugins/globus_handler plugins/virtual_resources plugins/wt_versioning
-	docker exec -ti $$(docker ps --filter=name=wt_girder -q) girder-install web --dev --plugins=oauth,gravatar,jobs,worker,wt_data_manager,wholetale,wt_home_dir,globus_handler
-	docker exec --user=root -ti $$(docker ps --filter=name=wt_girder -q) pip install -r /gwvolman/requirements.txt -e /gwvolman
-	docker exec --user=root -ti $$(docker ps --filter=name=wt_girder -q) pip install -e /girderfs
+	# docker exec -ti $$(docker ps --filter=name=wt_girder -q) girder-install plugin plugins/wt_data_manager plugins/wholetale plugins/wt_home_dir plugins/globus_handler plugins/virtual_resources plugins/wt_versioning
+	# docker exec -ti $$(docker ps --filter=name=wt_girder -q) girder-install web --dev --plugins=oauth,gravatar,jobs,worker,wt_data_manager,wholetale,wt_home_dir,globus_handler
+	# docker exec --user=root -ti $$(docker ps --filter=name=wt_girder -q) pip install -r /gwvolman/requirements.txt -e /gwvolman
+	# docker exec --user=root -ti $$(docker ps --filter=name=wt_girder -q) pip install -e /girderfs
 	./setup_girder.py
 
 restart_girder:
