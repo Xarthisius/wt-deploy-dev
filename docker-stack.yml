@@ -20,7 +20,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./traefik:/etc/traefik
-      - ./traefik/acme:/acme
+      - ./traefik/certs/fullchain.pem:/cert.pem
+      - ./traefik/certs/privkey.pem:/key.pem
     deploy:
       replicas: 1
       labels:
@@ -29,42 +30,41 @@ services:
         constraints:
           - "node.role == manager"
     environment:
-      - GODADDY_API_KEY=$WT_GODADDY_API_KEY
-      - GODADDY_API_SECRET=$WT_GODADDY_API_SECRET
+      - TRAEFIK_PROVIDERS_DOCKER_DEFAULTRULE="Host(`\{\{ trimPrefix `/` .Name \}\}.${domain}`)"
     command:
       - "--accesslog=true"
       - "--accesslog.format=json"
       - "--accesslog.filepath=/dev/stdout"
 
-  minio:
-    image: minio/minio
-    env_file: ./minio.env
-    ports:
-      - 9000:9000
-    volumes:
-      - ./volumes/minio:/data
-    networks:
-      - traefik-net
-    command: minio server /data --console-address ":9001"
-    deploy:
-      labels:
-        - "traefik.enable=true"
-        - "traefik.docker.network=wt_traefik-net"
-        - "traefik.http.routers.minio.rule=Host(`minio.${domain}`)"
-        - "traefik.http.routers.minio.entrypoints=websecure"
-        - "traefik.http.routers.minio.tls=true"
-        - "traefik.http.routers.minio.service=minio"
-        - "traefik.http.services.minio.loadbalancer.server.port=9000"
-        - "traefik.http.services.minio.loadbalancer.passhostheader=true"
-        - "traefik.http.routers.minio-console.rule=Host(`minio-console.${domain}`)"
-        - "traefik.http.routers.minio-console.entrypoints=websecure"
-        - "traefik.http.routers.minio-console.tls=true"
-        - "traefik.http.routers.minio-console.service=minio-console"
-        - "traefik.http.services.minio-console.loadbalancer.server.port=9001"
-        - "traefik.http.services.minio-console.loadbalancer.passhostheader=true"
+        #  minio:
+        #    image: minio/minio
+        #    env_file: ./minio.env
+        #    ports:
+        #      - 9000:9000
+        #    volumes:
+        #      - ./volumes/minio:/data
+        #    networks:
+        #      - traefik-net
+        #    command: minio server /data --console-address ":9001"
+        #    deploy:
+        #      labels:
+        #        - "traefik.enable=true"
+        #        - "traefik.docker.network=wt_traefik-net"
+        #        - "traefik.http.routers.minio.rule=Host(`minio.${domain}`)"
+        #        - "traefik.http.routers.minio.entrypoints=websecure"
+        #        - "traefik.http.routers.minio.tls=true"
+        #        - "traefik.http.routers.minio.service=minio"
+        #        - "traefik.http.services.minio.loadbalancer.server.port=9000"
+        #        - "traefik.http.services.minio.loadbalancer.passhostheader=true"
+        #        - "traefik.http.routers.minio-console.rule=Host(`minio-console.${domain}`)"
+        #        - "traefik.http.routers.minio-console.entrypoints=websecure"
+        #        - "traefik.http.routers.minio-console.tls=true"
+        #        - "traefik.http.routers.minio-console.service=minio-console"
+        #        - "traefik.http.services.minio-console.loadbalancer.server.port=9001"
+        #        - "traefik.http.services.minio-console.loadbalancer.passhostheader=true"
 
   mongo:
-    image: mongo:3.6
+    image: mongo:4.4
     networks:
       - mongo
     volumes:
@@ -76,36 +76,33 @@ services:
         - "traefik.enable=false"
 
   girder:
-    image: wholetale/girder:approval
+    image: xarthisius/girder:5-dev
     networks:
       - traefik-net
       - celery
       - mongo
     volumes:
       - ./volumes:/srv/data
-      - ./girder/girder.local.cfg:/girder/girder/conf/girder.local.cfg
       - ./workspace.yaml:/girder/workspace.yaml
-      - ./src/wholetale:/girder/plugins/wholetale
-      - ./src/minio_assetstore:/girder/plugins/minio_assetstore
-      - ./src/synced_folders:/girder/plugins/synced_folders
-      - ./src/sem_viewer:/girder/plugins/sem_viewer
-      - ./src/table_view:/girder/plugins/table_view
-      - ./src/item_previews:/girder/plugins/item_previews
-      - ./src/wt_data_manager:/girder/plugins/wt_data_manager
-      - ./src/wt_home_dir:/girder/plugins/wt_home_dir
-      - ./src/wt_versioning:/girder/plugins/wt_versioning
-      - ./src/globus_handler:/girder/plugins/globus_handler
-      - ./src/virtual_resources:/girder/plugins/virtual_resources
-      - ./src/dataflows:/girder/plugins/dataflows
+      - ./src/girder-wholetale:/girder-plugins/02-girder-wholetale
+      - ./src/girder-virtual-resources:/girder-plugins/01-girder-virtual-resources
+     # - ./src/minio_assetstore:/girder/plugins/minio_assetstore
+     # - ./src/synced_folders:/girder/plugins/synced_folders
+     # - ./src/sem_viewer:/girder/plugins/sem_viewer
+     # - ./src/table_view:/girder/plugins/table_view
+     # - ./src/item_previews:/girder/plugins/item_previews
+     # - ./src/dataflows:/girder/plugins/dataflows
+     # - ./src/sample_tracker:/girder/plugins/sample_tracker
       - ./src/gwvolman:/gwvolman
       - ./src/girderfs:/girderfs
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp:/tmp
-      - /home/xarth/codes/htmdec:/home/xarth/codes/htmdec
     environment:
       - DOMAIN=${domain}
       - DASHBOARD_URL=https://dashboard.${domain}
-      - GOSU_USER=girder:girder:${docker_group}
+      - GIRDER_MONGO_URI=mongodb://mongo:27017/girder
+      - GIRDER_HOST=0.0.0.0
+      - GOSU_USER=1001:1001:${docker_group}
       - GOSU_CHOWN=/srv/data
       - DATAONE_URL=https://cn-stage-2.test.dataone.org/cn
       - GIRDER_LOCAL_FONTELLO_ARCHIVE=/girder/clients/web/static/built/fontello.zip
@@ -130,7 +127,7 @@ services:
         - "traefik.http.middlewares.girder.forwardauth.trustforwardheader=true"
 
   logger:
-    image: wholetale/instance_logger:latest
+    image: xarthisius/wt-instance-logger:latest
     networks:
       - celery
     volumes:
@@ -150,7 +147,7 @@ services:
         - "traefik.enable=false"
 
   dashboard:
-    image: wholetale/ngx-dashboard:latest
+    image: xarthisius/wt-dashboard:latest
     networks:
       - traefik-net
     environment:
@@ -173,7 +170,7 @@ services:
       - ./src/ngx-dashboard/dist/browser/:/usr/share/nginx/html/
 
   instance-errors:
-    image: wholetale/custom-errors:latest
+    image: xarthisius/wt-custom-errors:latest
     networks:
       - traefik-net
     deploy:
@@ -232,13 +229,13 @@ services:
         - "traefik.docker.network=wt_traefik-net"
 
   celery_worker:
-    image: wholetale/gwvolman
+    image: xarthisius/gwvolman:latest
     networks:
       - celery
     labels:
       - "traefik.enable=false"
     environment:
-      - GOSU_USER=wtuser:1000:${docker_group}
+      - GOSU_USER=ubuntu:1000:${docker_group}
       - DOMAIN=${domain}
       - DEV=true
       - REPO2DOCKER_VERSION=${r2d_version}
@@ -262,6 +259,10 @@ services:
         target: ${PWD}/volumes
         bind:
           propagation: rshared
+    extra_hosts:
+      - "registry.${domain}:host-gateway"
+      - "images.${domain}:host-gateway"
+      - "girder.${domain}:host-gateway"
     deploy:
       mode: global
       labels:

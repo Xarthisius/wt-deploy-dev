@@ -1,6 +1,6 @@
 .PHONY: clean dirs dev images gwvolman_src wholetale_src dms_src home_src sources_wt \
 	rebuild_dashboard watch_dashboard \
-	restart_worker restart_girder globus_handler_src status update_src
+	restart_worker restart_girder globus_handler_src status update_src certs
 
 SUBDIRS = src volumes/ps volumes/workspaces volumes/homes volumes/base volumes/versions volumes/runs volumes/licenses volumes/mountpoints volumes/tmp volumes/minio
 TAG = latest
@@ -11,14 +11,28 @@ YARN = /usr/local/bin/yarn
 
 images:
 	docker pull traefik:alpine
-	docker pull mongo:3.2
+	docker pull mongo:4.4
 	docker pull redis:latest
 	docker pull registry:2.6
 	docker pull node:carbon-slim
-	docker pull wholetale/girder:$(TAG)
-	docker pull wholetale/gwvolman:$(TAG)
-	docker pull wholetale/repo2docker_wholetale:$(TAG)
-	docker pull wholetale/ngx-dashboard:$(TAG)
+	docker pull xarthisius/girder:$(TAG)
+	docker pull xarthisius/gwvolman:$(TAG)
+	docker pull xarthisius/repo2docker_wholetale:$(TAG)
+	docker pull xarthisius/ngx-dashboard:$(TAG)
+
+.env:
+	curl -s -o .env https://wt.xarthisius.xyz/wt_local_env
+
+traefik/certs:
+	mkdir -p traefik/certs
+
+traefik/certs/fullchain.pem: traefik/certs
+	curl -s -o traefik/certs/fullchain.pem https://wt.xarthisius.xyz/wt_local_cert
+
+traefik/certs/privkey.pem: traefik/certs
+	curl -s -o traefik/certs/privkey.pem https://wt.xarthisius.xyz/wt_local_key
+
+certs: .env traefik/certs/fullchain.pem traefik/certs/privkey.pem
 
 src/sem_viewer:
 	git clone https://github.com/htmdec/sem_viewer src/sem_viewer
@@ -56,7 +70,7 @@ src/globus_handler:
 src/ngx-dashboard:
 	git clone https://github.com/whole-tale/ngx-dashboard src/ngx-dashboard
 
-sources_wt: src src/gwvolman src/wholetale src/wt_data_manager src/wt_home_dir src/globus_handler src/girderfs src/ngx-dashboard src/virtual_resources src/wt_versioning src/sem_viewer src/table_view src/synced_folders
+sources_wt: src src/gwvolman src/wholetale src/wt_data_manager src/wt_home_dir src/globus_handler src/girderfs src/ngx-dashboard src/virtual_resources src/wt_versioning src/sem_viewer src/table_view src/synced_folders certs
 
 dirs: $(SUBDIRS)
 
@@ -74,36 +88,10 @@ dev: services
 	    cid=$$(docker ps --filter=name=wt_girder -q) ; \
 	done; \
 	true
-	docker cp ./fontello.zip $$(docker ps --filter=name=wt_girder -q):/girder/clients/web/static/built/
-	docker exec -ti $$(docker ps --filter=name=wt_girder -q) girder-install plugin \
-		plugins/wt_data_manager \
-		plugins/wholetale \
-		plugins/wt_home_dir \
-		plugins/globus_handler \
-		plugins/virtual_resources \
-		plugins/wt_versioning \
-		plugins/minio_assetstore \
-		plugins/sem_viewer \
-		plugins/dataflows \
-		plugins/table_view \
-		plugins/synced_folders
-	docker exec -ti $$(docker ps --filter=name=wt_girder -q) girder-install web --dev --plugins=oauth,gravatar,jobs,worker,wt_data_manager,wholetale,wt_home_dir,globus_handler,sem_viewer,table_view,synced_folders,minio_assetstore,dataflows
-	docker exec --user=root -ti $$(docker ps --filter=name=wt_girder -q) pip install -r /gwvolman/requirements.txt -e /gwvolman
-	docker exec --user=root -ti $$(docker ps --filter=name=wt_girder -q) pip install -e /girderfs
-	./setup_girder.py
+	. ./.env && ./setup_girder.py
 
 restart_girder:
-	which jq || (echo "Please install jq to execute the 'restart_girder' make target" && exit 1)
-	docker exec --user=root -ti $$(docker ps --filter=name=wt_girder -q) pip install -r /gwvolman/requirements.txt -e /gwvolman
-	docker exec -ti $$(docker ps --filter=name=wt_girder -q) \
-                curl -XPUT -s 'http://localhost:8080/api/v1/system/restart' \
-                        --header 'Content-Type: application/json' \
-                        --header 'Accept: application/json' \
-                        --header 'Content-Length: 0' \
-                        --header "Girder-Token: $$(docker exec -ti $$(docker ps --filter=name=wt_girder -q) \
-                                curl 'http://localhost:8080/api/v1/user/authentication' \
-                                --basic --user admin:arglebargle123 \
-                                        | jq -r .authToken.token)"
+	docker exec --user=root -ti $$(docker ps --filter=name=wt_girder -q) touch /venv/lib/python3.12/site-packages/requests/__init__.py
 
 rebuild_dashboard:
 	docker run \

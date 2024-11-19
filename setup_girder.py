@@ -14,16 +14,15 @@ params = {
     "admin": True,
 }
 headers = {"Content-Type": "application/json", "Accept": "application/json"}
-
+domain = os.environ.get("domain", "local.xarthisius.xyz")
 
 def final_msg():
     print("-------------- You should be all set!! -------------")
-    print("try going to https://girder.local.wholetale.org and log in with: ")
+    print(f"try going to https://girder.{domain} and log in with: ")
     print("  user : %s" % params["login"])
     print("  pass : %s" % params["password"])
 
-
-api_url = "https://girder.local.wholetale.org/api/v1"
+api_url = f"https://girder.{domain}/api/v1"
 
 # Give girder time to start
 while True:
@@ -40,7 +39,6 @@ if r.status_code == 400:
     print("If that is OK:")
     final_msg()
     sys.exit()
-
 # Store token for future requests
 headers["Girder-Token"] = r.json()["authToken"]["token"]
 
@@ -55,56 +53,12 @@ r = requests.post(
     },
 )
 
-print("Enabling plugins")
-plugins = [
-    "oauth",
-    "gravatar",
-    "jobs",
-    "worker",
-    "globus_handler",
-    "virtual_resources",
-    "wt_data_manager",
-    "wholetale",
-    "wt_home_dir",
-    "wt_versioning",
-]
-if os.environ.get("DATACAT"):
-    plugins += [
-        "table_view",
-        "synced_folders",
-        "dataflows",
-        "sem_viewer",
-        "minio_assetstore",
-    ]
-r = requests.put(
-    api_url + "/system/plugins",
-    headers=headers,
-    params={"plugins": json.dumps(plugins)},
-)
-r.raise_for_status()
-
-print("Restarting girder to load plugins")
-r = requests.put(api_url + "/system/restart", headers=headers)
-r.raise_for_status()
-
-# Give girder time to restart
-while True:
-    print("Waiting for Girder to restart")
-    r = requests.get(
-        api_url + "/oauth/provider",
-        headers=headers,
-        params={"redirect": "http://blah.com"},
-    )
-    if r.status_code == 200:
-        break
-    time.sleep(2)
-
 print("Setting up Plugin")
 
 settings = [
     {
         "key": "core.cors.allow_origin",
-        "value": "https://dashboard.local.wholetale.org,http://localhost:4200,https://legacy.local.wholetale.org",
+        "value": f"https://dashboard.{domain},http://localhost:4200,https://legacy.{domain}",
     },
     {
         "key": "core.cors.allow_headers",
@@ -115,8 +69,7 @@ settings = [
             "X-Forwarded-Host, Remote-Addr, Cache-Control"
         ),
     },
-    {"key": "core.cookie_domain", "value": ".local.wholetale.org"},
-    {"key": "core.secure_cookie", "value": True},
+    # {"key": "core.cookie_domain", "value": f".{domain}"},
     {"key": "worker.api_url", "value": "http://girder:8080/api/v1"},
     {"key": "worker.broker", "value": "redis://redis/"},
     {"key": "worker.backend", "value": "redis://redis/"},
@@ -125,34 +78,26 @@ settings = [
         "key": "oauth.globus_client_secret",
         "value": os.environ.get("GLOBUS_CLIENT_SECRET"),
     },
-    {"key": "oauth.orcid_client_id", "value": os.environ.get("ORCID_CLIENT_ID")},
-    {
-        "key": "oauth.orcid_client_secret",
-        "value": os.environ.get("ORCID_CLIENT_SECRET"),
-    },
+    #{"key": "oauth.orcid_client_id", "value": os.environ.get("ORCID_CLIENT_ID")},
+    #{
+    #    "key": "oauth.orcid_client_secret",
+    #    "value": os.environ.get("ORCID_CLIENT_SECRET"),
+    #},
     {"key": "oauth.providers_enabled", "value": ["globus"]},
-    {"key": "dm.globus_gc_dir", "value": "/opt/globusconnectpersonal"},
-    {
-        "key": "wholetale.dataverse_extra_hosts",
-        "value": ["demo.dataverse.org"],
-    },
-    {
-        "key": "wholetale.zenodo_extra_hosts",
-        "value": ["https://sandbox.zenodo.org/record/"]
-    },
+    # {"key": "dm.globus_gc_dir", "value": "/opt/globusconnectpersonal"},
+    #{
+    #    "key": "wholetale.zenodo_extra_hosts",
+    #    "value": ["https://sandbox.zenodo.org/record/"]
+    #},
     {"key": "dm.private_storage_path", "value": "/srv/data/ps"},
-    {"key": "wthome.homedir_root", "value": "/srv/data/homes"},
-    {"key": "wthome.taledir_root", "value": "/srv/data/workspaces"},
-    {"key": "wtversioning.runs_root", "value": "/srv/data/runs"},
-    {"key": "wtversioning.versions_root", "value": "/srv/data/versions"},
+    {"key": "wholetale.homes_root", "value": "/srv/data/homes"},
+    {"key": "wholetale.workspaces_root", "value": "/srv/data/workspaces"},
+    {"key": "wholetale.runs_root", "value": "/srv/data/runs"},
+    {"key": "wholetale.versions_root", "value": "/srv/data/versions"},
+    {"key": "wholetale.dashboard_link_title", "value": "Tale Dashboard"},
+    {"key": "wholetale.catalog_link_title", "value": "Data Catalog"},
+    {"key": "wholetale.enable_data_catalog", "value": True},
 ]
-if os.environ.get("DATACAT"):
-    settings += [
-        {"key": "wholetale.dashboard_link_title", "value": "Tale Dashboard"},
-        {"key": "wholetale.catalog_link_title", "value": "Data Catalog"},
-        {"key": "wholetale.enable_data_catalog", "value": True},
-        {"key": "core.registration_policy", "value": "approve"},
-    ]
 
 r = requests.put(
     api_url + "/system/setting", headers=headers, params={"list": json.dumps(settings)}
@@ -174,7 +119,7 @@ for image in images:
     r = requests.post(api_url + "/image", headers=headers, params=image)
     r.raise_for_status()
 
-print("Restarting girder to update WebDav roots")
-r = requests.put(api_url + "/system/restart", headers=headers)
-r.raise_for_status()
+#print("Restarting girder to update WebDav roots")
+#r = requests.put(api_url + "/system/restart", headers=headers)
+#r.raise_for_status()
 final_msg()

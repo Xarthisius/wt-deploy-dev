@@ -1,7 +1,7 @@
 [http]
   [http.routers]
     [http.routers.vocabularies]
-      rule="Host(`vocabularies.local.wholetale.org`)"
+      rule='Host(`vocabularies.{{ env "DOMAIN" }}`)'
       service="vocabularies"
       entryPoints=["web", "websecure"]
       middlewares=["repo-prefix"]
@@ -17,3 +17,13 @@
         passHostHeader = false
         [[http.services.vocabularies.loadBalancer.servers]]
           url="https://whole-tale.github.io/"
+
+[[tls.certificates]]
+  certFile = "/cert.pem"
+  keyFile = "/privkey.pem"
+
+[tls.stores]
+  [tls.stores.default]
+    [tls.stores.default.defaultCertificate]
+      certFile = "/cert.pem"
+      keyFile = "/privkey.pem"

@@ -19,10 +19,11 @@
     swarmMode = true
     swarmModeRefreshSeconds = "15s"
     httpClientTimeout = "0s"
-    defaultRule = "Host(`{{ trimPrefix `/` .Name }}.local.wholetale.org`)"
+    # defaultRule = Host(`{{ trimPrefix `/` .Name }}.{{ env "DOMAIN" }}`)
   [providers.file]
-    filename="/etc/traefik/vocab.toml"
+    directory="/etc/traefik/dynamic"
     watch=true
+
 
 [tls.options]
   [tls.options.default]
@@ -60,13 +61,3 @@
         Authorization = "drop"
         Content-Type = "keep"
         User-Agent = "redact"
-
-[certificatesResolvers]
-  [certificatesResolvers.default]
-    [certificatesResolvers.default.acme]
-      email = "bgates@microsoft.com"
-      storage = "/acme/acme.json"
-      [certificatesResolvers.default.acme.dnsChallenge]
-        provider = "godaddy"
-        delayBeforeCheck = "30m0s"
-        #entryPoint = "https"
