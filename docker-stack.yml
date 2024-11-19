@@ -167,7 +167,7 @@ services:
         - "traefik.http.services.dashboard.loadbalancer.passhostheader=true"
         - "traefik.docker.network=wt_traefik-net"
     volumes:
-      - ./src/ngx-dashboard/dist/browser/:/usr/share/nginx/html/
+      - ./src/wt-dashboard/dist/browser/:/usr/share/nginx/html/
 
   instance-errors:
     image: xarthisius/wt-custom-errors:latest

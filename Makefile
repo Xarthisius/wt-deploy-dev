@@ -18,7 +18,7 @@ images:
 	docker pull xarthisius/girder:$(TAG)
 	docker pull xarthisius/gwvolman:$(TAG)
 	docker pull xarthisius/repo2docker_wholetale:$(TAG)
-	docker pull xarthisius/ngx-dashboard:$(TAG)
+	docker pull xarthisius/wt-dashboard:$(TAG)
 
 .env:
 	curl -s -o .env https://wt.xarthisius.xyz/wt_local_env
@@ -41,41 +41,31 @@ src/table_view:
 	git clone https://github.com/htmdec/table_view src/table_view
 
 src/synced_folders:
-	git clone https://github.com/whole-tale/synced_folders src/synced_folders
+	git clone https://github.com/hemi-ncsa-dt/synced_folders src/synced_folders
 
 src/girderfs:
-	git clone https://github.com/whole-tale/girderfs src/girderfs
+	git clone https://github.com/xarthisius/girderfs src/girderfs
 
 src/gwvolman:
-	git clone https://github.com/whole-tale/gwvolman src/gwvolman
+	git clone https://github.com/xarthisius/gwvolman src/gwvolman
 
-src/wholetale:
-	git clone https://github.com/whole-tale/girder_wholetale src/wholetale
+src/girder-wholetale:
+	git clone https://github.com/xarthisius/girder-wholetale src/girder-wholetale
 
-src/wt_data_manager:
-	git clone https://github.com/whole-tale/girder_wt_data_manager src/wt_data_manager
+src/girder-virtual-resources:
+	git clone https://github.com/xarthisius/girder-virtual-resources src/girder-virtual-resources
 
-src/wt_home_dir:
-	git clone https://github.com/whole-tale/wt_home_dirs src/wt_home_dir
+src/wt-dashboard:
+	git clone https://github.com/xarthisius/wt-dashboard src/wt-dashboard
 
-src/wt_versioning:
-	git clone https://github.com/whole-tale/wt_versioning src/wt_versioning
+src/wt-dashboard/dist/browser: src/wt-dashboard rebuild_dashboard
 
-src/virtual_resources:
-	git clone https://github.com/whole-tale/virtual_resources src/virtual_resources
-
-src/globus_handler:
-	git clone https://github.com/whole-tale/globus_handler src/globus_handler
-
-src/ngx-dashboard:
-	git clone https://github.com/whole-tale/ngx-dashboard src/ngx-dashboard
-
-sources_wt: src src/gwvolman src/wholetale src/wt_data_manager src/wt_home_dir src/globus_handler src/girderfs src/ngx-dashboard src/virtual_resources src/wt_versioning src/sem_viewer src/table_view src/synced_folders certs
+sources_wt: src src/gwvolman src/girder-wholetale src/girderfs src/wt-dashboard src/girder-virtual-resources src/sem_viewer src/table_view src/synced_folders src/wt-dashboard/dist/browser certs
 
 dirs: $(SUBDIRS)
 
 $(SUBDIRS):
-	@sudo mkdir -p $@
+	@mkdir -p $@
 
 services: dirs sources_wt
 
@@ -99,7 +89,7 @@ rebuild_dashboard:
 		--user=$${UID}:$${GID} \
 		-ti \
 		-e NODE_OPTIONS=--max-old-space-size=4096 \
-		-v $${PWD}/src/ngx-dashboard:/srv/app \
+		-v $${PWD}/src/wt-dashboard:/srv/app \
 		--entrypoint /bin/sh \
 		-w /srv/app node:fermium \
 			-c 'yarn install --network-timeout=360000 && \
@@ -111,7 +101,7 @@ watch_dashboard:
 		--user=$${UID}:$${GID} \
 		-ti \
 		-e NODE_OPTIONS=--max-old-space-size=4096 \
-		-v $${PWD}/src/ngx-dashboard:/srv/app \
+		-v $${PWD}/src/wt-dashboard:/srv/app \
 		-w /srv/app \
 		--entrypoint /bin/sh \
 		node:fermium \
