@@ -58,14 +58,24 @@ src/girder-virtual-resources:
 src/wt-dashboard:
 	git clone https://github.com/xarthisius/wt-dashboard src/wt-dashboard
 
-src/wt-dashboard/dist/browser: src/wt-dashboard rebuild_dashboard
+src/wt-dashboard/dist/browser: src/wt-dashboard
+	docker run \
+		--rm \
+		--user=$${UID}:$${GID} \
+		-ti \
+		-e NODE_OPTIONS=--max-old-space-size=4096 \
+		-v $${PWD}/src/wt-dashboard:/srv/app \
+		--entrypoint /bin/sh \
+		-w /srv/app node:fermium \
+			-c 'yarn install --network-timeout=360000 && \
+			./node_modules/@angular/cli/bin/ng build --deleteOutputPath=false --progress'
 
 sources_wt: src src/gwvolman src/girder-wholetale src/girderfs src/wt-dashboard src/girder-virtual-resources src/sem_viewer src/table_view src/synced_folders src/wt-dashboard/dist/browser certs
 
 dirs: $(SUBDIRS)
 
 $(SUBDIRS):
-	@mkdir -p $@
+	@sudo mkdir -p $@
 
 services: dirs sources_wt
 
